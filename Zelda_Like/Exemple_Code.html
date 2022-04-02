@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><title>Mon 1er jeu Phaser</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.51.0/dist/phaser.js">
+    </script>
+
+    <style type="text/css"> body 
+    
+        { margin: 0; 
+        }
+ 
+        #endGame{
+            display: none;
+            font-size: 100px;
+            color: red;
+            padding-top: 230px;
+            padding-left:110px ;
+            position:absolute;
+            z-index:1
+        }
+
+        
+    
+    </style>
+</head>
+<body>
+    <script type="text/javascript">
+
+        class Exterieur extends Phaser.Scene{
+            constructor(){
+                super("Exterieur");
+        }
+
+        
+          
+
+        preload(){
+
+            this.load.image("jeudetuile", "assets/Tileset_Ecole.png");
+            this.load.image("Ecole", "assets/Ecole.png");
+
+            this.load.tilemapTiledJSON("carte", "map.json");  
+
+            this.load.spritesheet('persoDebut','assets/Spritesheet_Cahier_Prototype.png',
+            { frameWidth: 40, frameHeight: 40 });
+        }
+
+
+
+
+        create (){
+            
+            this.clavier = this.input.keyboard.addKeys('Z,Q,S,D');
+            this.cursors = this.input.keyboard.createCursorKeys(); 
+            
+            const carteDuNiveau = this.add.tilemap("carte");
+
+            // importer les TileSet 
+            const Tileset_Ecole = carteDuNiveau.addTilesetImage(
+                    "Tileset_Ecole",
+                    "jeudetuile"
+                    );  
+                    
+            const Ecole = carteDuNiveau.createLayer(
+                    "Ecole",
+                    Tileset_Ecole, 
+                    ); 
+
+            const plateformes = carteDuNiveau.createLayer(
+                    "Collision",
+                    Tileset_Ecole, 
+                    ); 
+
+            const teleportation = carteDuNiveau.createLayer(
+                    "teleportation",
+                    Tileset_Ecole, 
+                 ); 
+            
+        
+            this.player = this.physics.add.sprite(690,630,'persoDebut')    //1230 , 100    700, 570
+
+            plateformes.setCollisionByProperty({ estSolide: true });
+
+            teleportation.setCollisionByExclusion(-1, true);
+            this.physics.add.collider(this.player, teleportation, this.changeScene, null, this);
+           
+            this.physics.add.collider(this.player, plateformes);
+
+            
+
+/*
+            if (this.player.x >= 670){
+                if (this.player.x <= 740){
+                    if (this.player.y >= 670){
+                        if (this.player.y <= 740){
+                            this.scene.start("Salledeclasse")
+                    }}}}
+*/
+
+        // Pour faire le carré de téléportation
+        // coin haut gauche -> 670 550
+        // coin haut droite -> 740 550
+        // coin bas droite -> 740 600
+        // coin bas gauche -> 670 600
+  
+
+
+            this.cameras.main.zoom = 2;
+            this.physics.world.setBounds(0, 0, 14880, 1088);
+            this.cameras.main.setBounds(0, 0, 14880, 1088);
+            this.cameras.main.startFollow(this.player); 
+
+            // création animation personnage
+
+                this.anims.create({
+                    key: 'front',
+                    frames: this.anims.generateFrameNumbers('persoDebut', {start:1,end:8}),
+                    frameRate: 10,
+                    repeat: -1
+            });
+                this.anims.create({
+                    key: 'back',
+                    frames: this.anims.generateFrameNumbers('persoDebut', {start:9,end:16}),
+                    frameRate: 10,
+                    repeat: -1
+            });
+                this.anims.create({
+                    key: 'right',
+                    frames: this.anims.generateFrameNumbers('persoDebut', {start:17,end:24}),
+                    frameRate: 10,
+                    repeat: -1
+            });
+                this.anims.create({
+                    key: 'left',
+                    frames: this.anims.generateFrameNumbers('persoDebut', {start:25,end:32}),
+                    frameRate: 10,
+                    repeat: -1
+                });
+                this.anims.create({
+                    key: 'turn',
+                    frames: [ { key: 'persoDebut', frame: 0 } ],
+                    frameRate: 20
+        });
+        }
+        
+        update(){
+
+        
+            if (this.clavier.Q.isDown){ //si la touche gauche est appuyée
+                this.player.setVelocityX(-160); //alors vitesse négative en X
+                this.player.anims.play('left', true); //et animation => gauche
+        }
+            else if (this.clavier.D.isDown){ //sinon si la touche droite est appuyée
+                this.player.setVelocityX(160); //alors vitesse positive en X
+                this.player.anims.play('right', true); //et animation => droite
+        }
+            else if (this.clavier.Z.isDown){ //sinon si la touche Haute est appuyée
+                this.player.setVelocityY(-160); //alors vitesse positive en Y
+                this.player.anims.play('back', true); //et animation => derrière
+        }
+            else if (this.clavier.S.isDown){ //sinon si la touche bas est appuyée
+                this.player.setVelocityY(160); //alors vitesse positive en X
+                this.player.anims.play('front', true); //et animation => devant
+        }
+            else{ // sinon
+                this.player.setVelocityX(0); //vitesse nulle
+                this.player.setVelocityY(0); //vitesse nulle
+                this.player.anims.play('turn'); //animation fait face caméra
+        }}
+        changeScene(player, trigger){
+                this.scene.start("Salledeclasse");
+                }
+    }
+
+    
+
+// ****************************************************************************************************
+// ****************************************************************************************************
+// ****************************************************************************************************
+// *******************************Passage à la scene de classe*****************************************
+// ****************************************************************************************************
+// ****************************************************************************************************
+// ****************************************************************************************************
+// ****************************************************************************************************
+
+
+        class Salledeclasse extends Phaser.Scene{
+            constructor(){
+                super("Salledeclasse");
+        }
+        preload(){
+
+            this.load.image("jeudetuileclasse", "assets/Salle_De_Classe_Collisions.png");
+            this.load.image("Tuiles_sol", "assets/Tuiles_sol.png");
+            
+            this.load.tilemapTiledJSON("carteclasse", "interieurecole.json");  
+            
+            this.load.spritesheet('persoDebut','assets/Spritesheet_Cahier_Prototype.png',
+            { frameWidth: 40, frameHeight: 40 });
+            }
+        
+        
+        
+        
+        create (){
+        
+        this.clavier = this.input.keyboard.addKeys('Z,Q,S,D');
+        this.cursors = this.input.keyboard.createCursorKeys(); 
+        
+        const carteDeClasse = this.add.tilemap("carteclasse");
+        
+        // importer les TileSet 
+        const Salle_De_Classe_Collisions = carteDeClasse.addTilesetImage(
+                "Salle_De_Classe_Collisions",
+                "jeudetuileclasse"
+                );  
+                
+        const Tuiles_sol = carteDeClasse.createLayer(
+                "Soldeclasse",
+                Salle_De_Classe_Collisions, 
+                ); 
+        
+        const Collisionsdeclasse = carteDeClasse.createLayer(
+                "Collisions",
+                Salle_De_Classe_Collisions, 
+                ); 
+        
+        
+        
+        this.player = this.physics.add.sprite(400,400,'persoDebut')    //1230 , 100    700, 570
+        
+        Collisionsdeclasse.setCollisionByProperty({ Solide: true });
+        
+        this.physics.add.collider(this.player, Collisionsdeclasse);
+
+ 
+
+           
+            this.cameras.main.zoom = 2;
+            this.physics.world.setBounds(0, 0, 14880, 1088);
+            this.cameras.main.setBounds(0, 0, 14880, 1088);
+            this.cameras.main.startFollow(this.player); 
+
+            // création animation personnage
+
+                this.anims.create({
+                    key: 'front',
+                    frames: this.anims.generateFrameNumbers('persoDebut', {start:1,end:8}),
+                    frameRate: 10,
+                    repeat: -1
+            });
+                this.anims.create({
+                    key: 'back',
+                    frames: this.anims.generateFrameNumbers('persoDebut', {start:9,end:16}),
+                    frameRate: 10,
+                    repeat: -1
+            });
+                this.anims.create({
+                    key: 'right',
+                    frames: this.anims.generateFrameNumbers('persoDebut', {start:17,end:24}),
+                    frameRate: 10,
+                    repeat: -1
+            });
+                this.anims.create({
+                    key: 'left',
+                    frames: this.anims.generateFrameNumbers('persoDebut', {start:25,end:32}),
+                    frameRate: 10,
+                    repeat: -1
+                });
+                this.anims.create({
+                    key: 'turn',
+                    frames: [ { key: 'persoDebut', frame: 0 } ],
+                    frameRate: 20
+            });
+                
+        }   
+            update(){
+                //ici le code de la fonction update
+                
+        
+            if (this.clavier.Q.isDown){ //si la touche gauche est appuyée
+                this.player.setVelocityX(-160); //alors vitesse négative en X
+                this.player.anims.play('left', true); //et animation => gauche
+        }
+            else if (this.clavier.D.isDown){ //sinon si la touche droite est appuyée
+                this.player.setVelocityX(160); //alors vitesse positive en X
+                this.player.anims.play('right', true); //et animation => droite
+        }
+            else if (this.clavier.Z.isDown){ //sinon si la touche Haute est appuyée
+                this.player.setVelocityY(-160); //alors vitesse positive en Y
+                this.player.anims.play('back', true); //et animation => derrière
+        }
+            else if (this.clavier.S.isDown){ //sinon si la touche bas est appuyée
+                this.player.setVelocityY(160); //alors vitesse positive en X
+                this.player.anims.play('front', true); //et animation => devant
+        }
+            else{ // sinon
+                this.player.setVelocityX(0); //vitesse nulle
+                this.player.setVelocityY(0); //vitesse nulle
+                this.player.anims.play('turn'); //animation fait face caméra
+        }}
+        
+    };
+
+
+
+    var config = {
+            pixelArt: true,
+            type: Phaser.AUTO,
+            width: 1280, height: 720,
+            physics: {
+            default: 'arcade',
+            arcade: {
+            gravity: { y: 0 },
+            debug: false
+            }},
+            scene: [Exterieur,Salledeclasse],
+            input : {gamepad:true},
+            };
+            
+
+            new Phaser.Game(config);  
+
+        
+/*
+            this.input.gamepad.once('connected', function (pad) {
+                this.paddle = pad;
+                this.padConnected = true;
+            });    
+
+            // quand la manette est connectée, les touches manettes sont activées
+            if (this.padConnected) {
+                moveUp = (cursors.up.isDown || this.keys.z.isDown ||  this.paddle.up || this.paddle.A)  
+                moveLeft = (cursors.left.isDown || this.keys.q.isDown ||this.paddle.left)  
+                moveRight = (cursors.right.isDown || this.keys.d.isDown || this.paddle.right)
+            }
+            // quand la manette n'est pas connectée, les touches manettes ne sont pas activées
+            else{
+                moveUp = (cursors.up.isDown || this.keys.z.isDown )  
+                moveLeft = (cursors.left.isDown || this.keys.q.isDown )  
+                moveRight = (cursors.right.isDown || this.keys.d.isDown ) 
+            }
+
+                    if (moveUp && player.body.blocked.down ) {
+                    player.setVelocityY(-400);
+                    }  
+                    if (moveLeft){ 
+                        player.direction = 'left';
+                        player.setVelocityX(-120); 
+                        player.anims.play('leftTir', true);
+                    }
+                    else if (moveRight){ 
+                        player.direction = 'right';
+                        player.setVelocityX(120);
+                        player.anims.play('rightTir', true);
+                    }
+                    else{ 
+                        player.setVelocityX(0); 
+                        player.anims.play('turnTir');
+                    }
+        
+*/
+      
+    </script>
+</body>
+</html>
